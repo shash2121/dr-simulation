@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  REGION: "us-east-1"
+  REDIS_HOST: "primary-redis.qkknwp.0001.use1.cache.amazonaws.com"
+  REDIS_PORT: "6379"
+  APP_PORT: "8080"
+  SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/311902596413/primary-orders-queue"
+  # Update REDIS_HOST and SQS_QUEUE_URL with actual values from Terraform outputs

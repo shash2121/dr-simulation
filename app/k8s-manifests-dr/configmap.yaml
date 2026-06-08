@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  REGION: "us-east-2"
+  REDIS_HOST: "dr-redis.jgeok1.0001.use2.cache.amazonaws.com"
+  REDIS_PORT: "6379"
+  APP_PORT: "8080"
+  SQS_QUEUE_URL: "https://sqs.us-east-2.amazonaws.com/311902596413/dr-orders-queue"

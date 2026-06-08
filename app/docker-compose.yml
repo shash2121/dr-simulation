@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dbadmin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dummydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: dummydb
+      DB_USERNAME: dbadmin
+      DB_PASSWORD: password
+      REGION: local
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      PORT: "8080"
+      # Uncomment and set these to connect to a real AWS SQS queue:
+      SQS_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/311902596413/primary-queue
+      AWS_DEFAULT_REGION: us-east-1
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pgdata:

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dr-sim-app
+  labels:
+    app: dr-sim-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dr-sim-app
+  template:
+    metadata:
+      labels:
+        app: dr-sim-app
+    spec:
+      serviceAccountName: my-app-sa
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: dr-sim-aws-secrets
+      containers:
+        - name: dr-sim-app
+          image: sha2121/dr-sim-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets
+              readOnly: true
+          envFrom:
+            - secretRef:
+                name: db-credentials
+            - configMapRef:
+                name: app-config
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
