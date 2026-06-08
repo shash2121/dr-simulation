@@ -193,7 +193,7 @@ This project uses **MySQL binlog replication** for cross-region data replication
 ### How It Works
 
 1. **Primary RDS** (us-east-1) is the master instance accepting reads and writes
-2. **DR RDS** (us-east-2) connects to primary via `CHANGE MASTER TO` and acts as a replica
+2. **DR RDS** (us-east-2) connects to primary via `mysql.rds_set_external_master` and acts as a replica
 3. Replication is **one-way**: Primary → DR
 4. On failover, roles are **reversed** — DR becomes master, primary becomes replica
 
@@ -254,14 +254,16 @@ mysql -h dr-rds.<id>.us-east-2.rds.amazonaws.com -P 3306 -u admin -p
 Then run:
 
 ```sql
-CHANGE MASTER TO
-  MASTER_HOST = 'primary-rds.<id>.us-east-1.rds.amazonaws.com',
-  MASTER_USER = 'repl_user',
-  MASTER_PASSWORD = '<strong-password>',
-  MASTER_PORT = 3306,
-  MASTER_AUTO_POSITION = 1;
+CALL mysql.rds_set_external_master (
+  'primary-rds.<id>.us-east-1.rds.amazonaws.com',
+  3306,
+  'repl_user',
+  '<strong-password>',
+  '',
+  0
+);
 
-START SLAVE;
+CALL mysql.rds_start_replication;
 ```
 
 ### Step 3: Verify Replication
@@ -294,8 +296,8 @@ mysql -h dr-rds.<id>.us-east-2.rds.amazonaws.com -P 3306 -u admin -p
 Then run:
 
 ```sql
-STOP SLAVE;
-RESET SLAVE ALL;
+CALL mysql.rds_stop_replication;
+CALL mysql.rds_reset_replication;
 ```
 
 ### Step 2: Create Replication User on DR
@@ -319,17 +321,19 @@ mysql -h primary-rds.<id>.us-east-1.rds.amazonaws.com -P 3306 -u admin -p
 Then run:
 
 ```sql
-STOP SLAVE;
-RESET SLAVE ALL;
+CALL mysql.rds_stop_replication;
+CALL mysql.rds_reset_replication;
 
-CHANGE MASTER TO
-  MASTER_HOST = 'dr-rds.<id>.us-east-2.rds.amazonaws.com',
-  MASTER_USER = 'repl_user',
-  MASTER_PASSWORD = '<strong-password>',
-  MASTER_PORT = 3306,
-  MASTER_AUTO_POSITION = 1;
+CALL mysql.rds_set_external_master (
+  'dr-rds.<id>.us-east-2.rds.amazonaws.com',
+  3306,
+  'repl_user',
+  '<strong-password>',
+  '',
+  0
+);
 
-START SLAVE;
+CALL mysql.rds_start_replication;
 ```
 
 ### Step 4: Verify
@@ -365,8 +369,8 @@ mysql -h primary-rds.<id>.us-east-1.rds.amazonaws.com -P 3306 -u admin -p
 Then run:
 
 ```sql
-STOP SLAVE;
-RESET SLAVE ALL;
+CALL mysql.rds_stop_replication;
+CALL mysql.rds_reset_replication;
 ```
 
 ### Step 2: Create Replication User on Primary
@@ -390,17 +394,19 @@ mysql -h dr-rds.<id>.us-east-2.rds.amazonaws.com -P 3306 -u admin -p
 Then run:
 
 ```sql
-STOP SLAVE;
-RESET SLAVE ALL;
+CALL mysql.rds_stop_replication;
+CALL mysql.rds_reset_replication;
 
-CHANGE MASTER TO
-  MASTER_HOST = 'primary-rds.<id>.us-east-1.rds.amazonaws.com',
-  MASTER_USER = 'repl_user',
-  MASTER_PASSWORD = '<strong-password>',
-  MASTER_PORT = 3306,
-  MASTER_AUTO_POSITION = 1;
+CALL mysql.rds_set_external_master (
+  'primary-rds.<id>.us-east-1.rds.amazonaws.com',
+  3306,
+  'repl_user',
+  '<strong-password>',
+  '',
+  0
+);
 
-START SLAVE;
+CALL mysql.rds_start_replication;
 ```
 
 ### Step 4: Update App Configuration
