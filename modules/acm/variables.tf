@@ -25,3 +25,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "wait_for_validation" {
+  description = "Wait for certificate to be issued (set false to skip wait)"
+  type        = bool
+  default     = false
+}

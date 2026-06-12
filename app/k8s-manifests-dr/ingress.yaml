@@ -7,9 +7,25 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /health
     alb.ingress.kubernetes.io/healthcheck-port: "8080"
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:311902596413:certificate/95d4b370-7ade-4130-8704-618bfee346c1
 spec:
-  ingressClassName: alb 
+  ingressClassName: alb
+  tls:
+    - hosts:
+        - infratocloud.xyz
+  rules:
+    - host: infratocloud.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dr-sim-app
+                port:
+                  number: 80
   defaultBackend:
     service:
       name: dr-sim-app

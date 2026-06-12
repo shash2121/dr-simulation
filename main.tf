@@ -60,7 +60,33 @@ module "vpc" {
 }
 
 # ───────────────────────────────────────
-# RDS (PostgreSQL)
+# VPC Peering (cross-region)
+# ───────────────────────────────────────
+
+module "vpc_peering" {
+  source = "./modules/vpc-peering"
+  count  = var.peer_vpc_id != "" ? 1 : 0
+
+  providers = {
+    aws          = aws
+    aws.accepter = aws.accepter
+  }
+
+  environment_name          = local.name_prefix
+  requester_vpc_id          = module.vpc.vpc_id
+  accepter_vpc_id           = var.peer_vpc_id
+  accepter_region           = var.peer_region
+  requester_cidr            = var.vpc_cidr
+  accepter_cidr             = var.peer_vpc_cidr
+  requester_route_table_id  = module.vpc.private_route_table_id
+  requester_public_route_table_id = module.vpc.public_route_table_id
+  accepter_route_table_id   = var.peer_route_table_id
+  accepter_public_route_table_id = var.peer_public_route_table_id
+  tags                      = local.common_tags
+}
+
+# ───────────────────────────────────────
+# RDS (MySQL)
 # ───────────────────────────────────────
 
 module "rds" {
@@ -79,6 +105,7 @@ module "rds" {
   vpc_id            = module.vpc.vpc_id
   create_security_group = true
   allowed_cidr_blocks = [var.vpc_cidr]
+  cross_region_cidr_blocks = var.cross_region_cidr_blocks
   tags              = local.common_tags
 }
 
@@ -197,7 +224,8 @@ module "acm" {
   count    = var.domain_name != "" ? 1 : 0
   domain_name     = var.domain_name
   subject_alternative_names = ["*.${var.domain_name}"]
-  zone_id         = module.route53[0].hosted_zone_id
+  zone_id         = var.create_route53 ? module.route53[0].hosted_zone_id : var.hosted_zone_id
+  wait_for_validation = var.acm_wait_for_validation
   environment     = var.environment
   tags            = local.common_tags
 }
@@ -208,7 +236,7 @@ module "acm" {
 
 module "route53" {
   source   = "./modules/route53"
-  count    = var.domain_name != "" ? 1 : 0
+  count    = var.domain_name != "" && var.create_route53 ? 1 : 0
   domain_name           = var.domain_name
   environment           = var.environment
   create_zone           = true

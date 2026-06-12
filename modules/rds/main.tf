@@ -16,6 +16,18 @@ resource "aws_security_group" "rds_sg" {
     description = "Database access"
   }
 
+  # Allow cross-region replication access
+  dynamic "ingress" {
+    for_each = length(var.cross_region_cidr_blocks) > 0 ? [1] : []
+    content {
+      from_port   = var.port
+      to_port     = var.port
+      protocol    = "tcp"
+      cidr_blocks = var.cross_region_cidr_blocks
+      description = "Cross-region replication access"
+    }
+  }
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
@@ -32,6 +44,20 @@ resource "aws_security_group" "rds_sg" {
   )
 }
 
+# RDS DB Parameter Group (for MySQL replication)
+resource "aws_db_parameter_group" "this" {
+  count  = var.engine == "mysql" && !var.is_replica ? 1 : 0
+  name   = "${var.db_identifier}-pg"
+  family = "${var.engine}${var.engine_version}"
+
+  parameter {
+    name  = "binlog_format"
+    value = "ROW"
+  }
+
+  tags = merge(var.tags, { Name = "${var.db_identifier}-pg" })
+}
+
 # RDS Instance
 resource "aws_db_instance" "rds_instance" {
   identifier              = var.db_identifier
@@ -46,6 +72,7 @@ resource "aws_db_instance" "rds_instance" {
   port                    = var.port
   db_subnet_group_name    = var.db_subnet_group_name
   vpc_security_group_ids  = var.create_security_group ? [aws_security_group.rds_sg[0].id] : var.vpc_security_group_ids
+  parameter_group_name    = var.engine == "mysql" && !var.is_replica ? aws_db_parameter_group.this[0].name : null
   skip_final_snapshot     = var.skip_final_snapshot
   publicly_accessible     = var.publicly_accessible
   backup_retention_period = var.backup_retention_period

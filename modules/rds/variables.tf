@@ -82,6 +82,12 @@ variable "allowed_cidr_blocks" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "cross_region_cidr_blocks" {
+  description = "CIDR blocks from other regions allowed to access RDS (for replication)"
+  type        = list(string)
+  default     = []
+}
+
 variable "skip_final_snapshot" {
   description = "Whether to skip taking a final snapshot when the instance is deleted"
   type        = bool

@@ -100,12 +100,12 @@ output "eks_cluster_security_group_id" {
 
 output "hosted_zone_id" {
   description = "Route53 hosted zone ID (if domain configured)"
-  value       = var.domain_name != "" ? module.route53[0].hosted_zone_id : null
+  value       = try(module.route53[0].hosted_zone_id, null)
 }
 
 output "hosted_zone_name_servers" {
   description = "Route53 name servers (if domain configured)"
-  value       = var.domain_name != "" ? module.route53[0].hosted_zone_name_servers : null
+  value       = try(module.route53[0].hosted_zone_name_servers, null)
 }
 
 output "acm_certificate_arn" {

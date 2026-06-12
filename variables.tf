@@ -27,6 +27,42 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "cross_region_cidr_blocks" {
+  description = "CIDR blocks from other regions allowed to access RDS (for replication)"
+  type        = list(string)
+  default     = []
+}
+
+variable "peer_vpc_id" {
+  description = "VPC ID of the peer region for VPC peering"
+  type        = string
+  default     = ""
+}
+
+variable "peer_vpc_cidr" {
+  description = "CIDR block of the peer VPC"
+  type        = string
+  default     = ""
+}
+
+variable "peer_region" {
+  description = "AWS region of the peer VPC"
+  type        = string
+  default     = ""
+}
+
+variable "peer_route_table_id" {
+  description = "Private route table ID in the peer VPC to add peering route"
+  type        = string
+  default     = ""
+}
+
+variable "peer_public_route_table_id" {
+  description = "Public route table ID in the peer VPC to add peering route"
+  type        = string
+  default     = ""
+}
+
 # ───────────── Application ─────────────
 variable "container_image" {
   description = "Container image for the dummy app"
@@ -171,6 +207,24 @@ variable "record_name" {
   description = "DNS record name (e.g. 'app' for app.example.com, '' for root)"
   type        = string
   default     = ""
+}
+
+variable "create_route53" {
+  description = "Set to false to skip Route53 creation (use existing zone)"
+  type        = bool
+  default     = true
+}
+
+variable "hosted_zone_id" {
+  description = "Existing Route53 hosted zone ID (when create_route53 is false)"
+  type        = string
+  default     = ""
+}
+
+variable "acm_wait_for_validation" {
+  description = "Wait for ACM certificate to be issued before completing apply"
+  type        = bool
+  default     = true
 }
 
 # ───────────── EC2 ─────────────
